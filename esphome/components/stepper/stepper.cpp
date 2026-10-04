@@ -8,8 +8,10 @@ namespace stepper {
 static const char *const TAG = "stepper";
 
 void Stepper::calculate_speed_(time_t now = micros()) {
-  // delta t since last calculation in seconds
-  float dt = (now - this->last_calculation_) * 1e-6f;
+  // delta t since last calculation in seconds. Unsigned modular arithmetic
+  // so a micros() wraparound (~71min) yields the true small delta instead
+  // of a huge negative one (which would slam speed to max for a tick).
+  float dt = (uint32_t)(now - this->last_calculation_) * 1e-6f;
   this->last_calculation_ = now;
   if (this->has_reached_target()) {
     this->current_speed_ = 0.0f;

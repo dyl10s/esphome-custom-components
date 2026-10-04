@@ -64,7 +64,11 @@ void TMC2209Stepper::loop() {
   }
 
   if (this->control_method_ == ControlMethod::PULSES_CONTROL) {
-    time_t dt = now - this->last_step_;
+    // Unsigned modular arithmetic: stays correct across micros() wraparound
+    // (~71min). A signed difference goes permanently negative after a wrap
+    // while idle, wedging all stepping until reboot (last_step_ is only
+    // refreshed when a step fires).
+    uint32_t dt = (uint32_t)now - (uint32_t)this->last_step_;
     if (dt >= (1 / (float) vactual_) * 1e6f) {
       if (this->direction_ != this->current_direction) {
         this->dir_pin_->digital_write(this->current_direction == Direction::BACKWARD);
